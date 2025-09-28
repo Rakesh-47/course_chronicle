@@ -58,10 +58,10 @@ const UserRoutes = require( "./Routes/UserRoutes");
 const PaymentRoutes = require ( "./Routes/PaymentRoutes");
 const QuestionRoutes = require ( "./Routes/QuestionRoutes");
 const CourseRoutes = require("./Routes/CourseRoutes");
-app.use(UserRoutes);
-app.use(QuestionRoutes);
-app.use(PaymentRoutes);
-app.use("/api",CourseRoutes);
+app.use("/api", UserRoutes);
+app.use("/api", QuestionRoutes);
+app.use("/api", PaymentRoutes);
+app.use("/api", CourseRoutes);
 
 
 app.use((req, res, next) => next (new HttpError('Could not find this route.', 404)));
