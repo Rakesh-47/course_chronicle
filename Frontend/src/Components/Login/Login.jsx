@@ -1,5 +1,5 @@
 import React, { useEffect, useContext } from "react";
-import { Assets } from "../../Assets/Assets";
+import { Assets } from "../../assets/Assets";
 import { useNavigate } from "react-router-dom";
 import AuthContext from "../../Context/AuthContext";
 import * as motion from "motion/react-client";

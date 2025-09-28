@@ -3,12 +3,19 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const path = require('path');
 const HttpError =require('./Utils/HttpError');
+const cloudinary = require('cloudinary').v2;
 const fs = require("fs");
 require('dotenv').config();
 require('./Models/Course');
 
 const app = express();
 const MONGO_URI=process.env.MONGO_URI
+cloudinary.config({ 
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME, 
+  api_key: process.env.CLOUDINARY_API_KEY, 
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
 app.use(bodyParser.json());
 
 // Serve static files from the uploads directory

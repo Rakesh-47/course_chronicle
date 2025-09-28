@@ -34,7 +34,7 @@ function Upload() {
     formData.append("file", image);
 
     try {
-      const response = await fetch("http://localhost:8000/uploadPaper", {
+      const response = await fetch("/api/uploadPaper", {
         method: "POST",
         headers: { Authorization: "Bearer " + auth.token },
         body: formData,

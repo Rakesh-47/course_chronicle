@@ -2,7 +2,7 @@ import React, { useContext, useState, useEffect } from "react";
 import AuthContext from "../../Context/AuthContext";
 import { Spinner, Alert } from "@material-tailwind/react";
 import { useNavigate } from "react-router-dom";
-import { Assets } from "../../Assets/Assets";
+import { Assets } from "../../assets/Assets";
 import * as motion from "motion/react-client";
 
 export default function Signup() {

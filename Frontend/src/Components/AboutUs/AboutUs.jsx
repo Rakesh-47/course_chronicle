@@ -1,11 +1,11 @@
 import React from "react";
 import { motion } from "framer-motion";
-import rk from "../../assets/rk.jpg"; 
+import { Assets } from "../../assets/Assets";
 import { FaGithub, FaLinkedin, FaTwitter } from "react-icons/fa"; 
 
 const developers = [
   {
-    image: rk,
+    image:Assets.profile_img,
     name: 'Rakesh Kumar',
     role: 'Fullstack Architect & Competitive Programmar',
     text: `As a Final Year undergrad at IIT (ISM) Dhanbad, I thrive on the challenge of building elegant, high-performance applications and diving deep into the architecture that makes them run.`,

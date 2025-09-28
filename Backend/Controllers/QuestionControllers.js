@@ -9,6 +9,7 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 const coursesData = require("../Data/courses.json");
 const Course = require("../Models/Course");
 const promptTemplate = require("../Data/prompt.json");
+const cloudinary = require('cloudinary').v2; // Added for Cloudinary
 
 const GEMINI_KEY = process.env.GEMINI_KEY
 const API_KEY = process.env.GEMINI_API_KEY;
@@ -35,175 +36,180 @@ function sanitizeJsonResponse(str) {
 }
 
 const UploadPaper = async (req, res, next) => {
-  console.log("User data from middleware:", req.userData);
-  const user = await User.findById(req.userData.userId);
-  try {
+  try { 
+    console.log("User data from middleware:", req.userData);
+    
     if (!req.file) {
-      return res.status(400).json({ message: "No file uploaded" });
+      return next(new HttpError("No file uploaded.", 400));
+    }
+    
+    const user = await User.findById(req.userData.userId);
+    if (!user) {
+      return next(new HttpError("Authentication failed, user not found.", 404));
     }
 
-    // Save the file to the uploads directory
-    const filePath = path.join(__dirname, "../uploads", req.file.originalname);
-    fs.writeFileSync(filePath, req.file.buffer);
-    
-    // Respond immediately to user
+    // Respond immediately to user that the file is being processed
     res.status(202).json({ message: "Paper submitted for review. You will be notified once processing is complete." });
 
-    // Start Gemini processing in background
+    // --- Start processing in the background ---
     setImmediate(async () => {
       try {
-        // Convert file buffer to base64 string
+        // Step 1: Upload the image to Cloudinary
+        const cloudinaryResult = await new Promise((resolve, reject) => {
+          const uploadStream = cloudinary.uploader.upload_stream(
+            { folder: "exam_papers" },
+            (error, result) => {
+              if (error) reject(error);
+              else resolve(result);
+            }
+          );
+          uploadStream.end(req.file.buffer);
+        });
+
+        // Step 2: Process the uploaded image with Gemini API
         const image = req.file.buffer.toString("base64");
-
         const parts = [
-          {
-            text: JSON.stringify(promptTemplate, null, 2)
-          },
-          {
-            inlineData: {
-              mimeType: req.file.mimetype,
-              data: image,
-            },
-          },
+          { text: JSON.stringify(promptTemplate, null, 2) },
+          { inlineData: { mimeType: req.file.mimetype, data: image } },
         ];
-        
-        // =====================================================================================
-        // LATER: Switch back to the official SDK method after setting up billing.
-        // The SDK is more stable and is the recommended way for a production application.
-        /*
-        const result = await model.generateContent({
-          contents: [{ parts }],
-          generationConfig: {
-            responseMimeType: "application/json",
-            temperature: 0.2
-          },
-        });
-        const jsonResponse = result.response.text();
-        */
-        // =====================================================================================
+          // =====================================================================================
+          // LATER: Switch back to the official SDK method after setting up billing.
+          // The SDK is more stable and is the recommended way for a production application.
+          /*
+          const result = await model.generateContent({
+            contents: [{ parts }],
+            generationConfig: {
+              responseMimeType: "application/json",
+              temperature: 0.2
+            },
+          });
+          const jsonResponse = result.response.text();
+          */
+          // =====================================================================================
 
 
-        // =====================================================================================
-        // NOW: Using direct REST API call for testing without billing.
-        // This uses a preview model and is not recommended for production.
-        // =====================================================================================
-        const apiResponse = await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{ parts }],
-              generationConfig: {
-                responseMimeType: "application/json",
-                temperature: 0.2
-              },
-            }),
-        });
+          // =====================================================================================
+          // NOW: Using direct REST API call for testing without billing.
+          // This uses a preview model and is not recommended for production.
+          // =====================================================================================
+          const apiResponse = await fetch(API_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [{ parts }],
+                generationConfig: {
+                  responseMimeType: "application/json",
+                  temperature: 0.2
+                },
+              }),
+          });
 
-        if (!apiResponse.ok) {
-            const errorBody = await apiResponse.text();
-            throw new Error(`API call failed with status: ${apiResponse.status} - ${errorBody}`);
-        }
-        
-        const result = await apiResponse.json();
-        // The structure of the direct API response is different from the SDK
-        const jsonResponse = result.candidates[0].content.parts[0].text;
-        // =====================================================================================
-
-        console.log("Gemini raw response:", jsonResponse);
-
-        const safeJson = sanitizeJsonResponse(jsonResponse);
-        const parsed = JSON.parse(safeJson);
-        console.log("Parsed Gemini output:", parsed);
-
-        if (parsed.course.code === "-1" || parsed.session.toString() === "-1") {
-          console.error("Parsed output missing course information.");
-          if (user) {
-            user.Credit -= 10;
-            user.Notification.push({
-              Message: `Your paper [${req.body.title || req.file.originalname}] has been rejected as it could not be identified as a valid exam paper. Please try again.`
-            });
-            await user.save();
+          if (!apiResponse.ok) {
+              const errorBody = await apiResponse.text();
+              throw new Error(`API call failed with status: ${apiResponse.status} - ${errorBody}`);
           }
-          return;
-        }
+          
+          const result = await apiResponse.json();
+          // The structure of the direct API response is different from the SDK
+          const jsonResponse = result.candidates[0].content.parts[0].text;
+          // =====================================================================================
 
-        const questionsWithEmbeddings = await Promise.all(
-          parsed.questions.map(async (item) => {
-            const vector = await getVectorEmbedding(`${item.question} ${item.answer}`);
-            return {
-              question: item.question,
-              answer: item.answer,
-              tag: item.tag,
-              embedding: vector,
-            };
-          })
-        );
+          console.log("Gemini raw response:", jsonResponse);
 
-        let courseObj = await Course.findOne({ code: parsed.course.code });
-        console.log("Lookup by course code:", parsed.course.code, "=>", courseObj);
- 
-        if (!courseObj) {
-          const nameRegex = new RegExp("^" + parsed.course.name, "i");
-          courseObj = await Course.findOne({ name: { $regex: nameRegex } });
-          console.log("Fallback lookup by course name regex:", parsed.course.name, "=>", courseObj);
-          if (!courseObj) {
-            console.error("No course found with the provided code or name.");
+          const safeJson = sanitizeJsonResponse(jsonResponse);
+          const parsed = JSON.parse(safeJson);
+          console.log("Parsed Gemini output:", parsed);
+
+          if (parsed.course.code === "-1" || parsed.session.toString() === "-1") {
+            console.error("Parsed output missing course information.");
             if (user) {
               user.Credit -= 10;
               user.Notification.push({
-                Message: `Your paper [${req.body.title || req.file.originalname}] has been rejected as it could not be matched with a valid course. Please try again.`
+                Message: `Your paper [${req.body.title || req.file.originalname}] has been rejected as it could not be identified as a valid exam paper. Please try again.`
               });
               await user.save();
             }
             return;
           }
-        }
-        
-        const existingPaper = await Paper.findOne({
-          course: courseObj._id,
-          session: parsed.session,
-          sessionYear: parsed.sessionYear,
-          examType: parsed.examType,
-        });
-        if (existingPaper) {
+
+          const questionsWithEmbeddings = await Promise.all(
+            parsed.questions.map(async (item) => {
+              const vector = await getVectorEmbedding(`${item.question} ${item.answer}`);
+              return {
+                question: item.question,
+                answer: item.answer,
+                tag: item.tag,
+                embedding: vector,
+              };
+            })
+          );
+
+          let courseObj = await Course.findOne({ code: parsed.course.code });
+          console.log("Lookup by course code:", parsed.course.code, "=>", courseObj);
+    
+          if (!courseObj) {
+            const nameRegex = new RegExp("^" + parsed.course.name, "i");
+            courseObj = await Course.findOne({ name: { $regex: nameRegex } });
+            console.log("Fallback lookup by course name regex:", parsed.course.name, "=>", courseObj);
+            if (!courseObj) {
+              console.error("No course found with the provided code or name.");
+              if (user) {
+                user.Credit -= 10;
+                user.Notification.push({
+                  Message: `Your paper [${req.body.title || req.file.originalname}] has been rejected as it could not be matched with a valid course. Please try again.`
+                });
+                await user.save();
+              }
+              return;
+            }
+          }
+          
+          const existingPaper = await Paper.findOne({
+            course: courseObj._id,
+            session: parsed.session,
+            sessionYear: parsed.sessionYear,
+            examType: parsed.examType,
+          });
+          if (existingPaper) {
+            if (user) {
+              user.Notification.push({
+                Message: `Your paper [${req.body.title || req.file.originalname}] is already present in the database.`,
+                paperId: existingPaper._id
+              });
+              await user.save();
+            }
+            return;
+          }
+
+          const paper = new Paper({
+            title: req.body.title || req.file.originalname,
+            filePath: cloudinaryResult.secure_url, 
+            publicId: cloudinaryResult.public_id,
+            course: courseObj._id,
+            session: parsed.session,
+            sessionYear: parsed.sessionYear,
+            examType: parsed.examType,
+            questions: questionsWithEmbeddings,
+          });
+          await paper.save();
+          console.log("Paper updated successfully.");
           if (user) {
+            user.Credit += 100;
             user.Notification.push({
-              Message: `Your paper [${req.body.title || req.file.originalname}] is already present in the database.`,
-              paperId: existingPaper._id
+              Message: `Your paper [${parsed.course.code}] ${parsed.course.name} (${parsed.examType}) has been approved!`,
+              paperId: paper._id
             });
             await user.save();
           }
-          return;
+        } catch (err) {
+          if (user) {
+            user.Notification.push({
+              Message: `Your paper [${req.body.title || req.file.originalname}] has been rejected due to error: ${err.message}. Please try again.`
+            });
+            await user.save();
+          }
         }
-
-        const paper = new Paper({
-          title: req.body.title || req.file.originalname,
-          filePath: `/uploads/${req.file.originalname}`,
-          course: courseObj._id,
-          session: parsed.session,
-          sessionYear: parsed.sessionYear,
-          examType: parsed.examType,
-          questions: questionsWithEmbeddings,
-        });
-        await paper.save();
-        console.log("Paper updated successfully.");
-        if (user) {
-          user.Credit += 100;
-          user.Notification.push({
-            Message: `Your paper [${parsed.course.code}] ${parsed.course.name} (${parsed.examType}) has been approved!`,
-            paperId: paper._id
-          });
-          await user.save();
-        }
-      } catch (err) {
-        if (user) {
-          user.Notification.push({
-            Message: `Your paper [${req.body.title || req.file.originalname}] has been rejected due to error: ${err.message}. Please try again.`
-          });
-          await user.save();
-        }
-      }
-    });
+      });
   } catch (error) {
     next(error);
   }
