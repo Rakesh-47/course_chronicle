@@ -2,7 +2,7 @@ import { useState, useContext, useEffect } from "react";
 import AuthContext from "../../Context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import { Wallet } from "lucide-react";
-import { Assets } from "../../Assets/Assets";
+import { Assets } from "../../assets/Assets";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
