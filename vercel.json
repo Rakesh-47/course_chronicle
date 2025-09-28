@@ -1,19 +1,19 @@
 {
   "version": 2,
-  "functions": {
-    "Backend/index.js": {
-      "includeFiles": "Backend/Data/**/*"
-    }
-  },
   "builds": [
     {
       "src": "Backend/index.js",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": "Backend/Data/*"
+      }
     },
     {
       "src": "Frontend/package.json",
       "use": "@vercel/static-build",
-      "config": { "distDir": "dist" }
+      "config": {
+        "distDir": "dist"
+      }
     }
   ],
   "routes": [
