@@ -1,8 +1,12 @@
 {
-  "name": "course-chronicle-monorepo",
+  "name": "course-chronicle",
+  "version": "1.0.0",
   "private": true,
-  "workspaces": [
-    "Frontend",
-    "Backend"
-  ]
+  "scripts": {
+    "build": "npm --prefix Frontend run build",
+    "dev": "concurrently \"npm --prefix Frontend run dev\" \"vercel dev --listen 3001\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.0.0"
+  }
 }

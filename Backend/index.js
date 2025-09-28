@@ -1,15 +1,19 @@
-const express =require('express');
+const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const path = require('path');
-const HttpError =require('./Utils/HttpError');
+const HttpError = require('./Utils/HttpError');
 const cloudinary = require('cloudinary').v2;
 const fs = require("fs");
-require('dotenv').config();
-require('./Models/Course');
+
+// Use the dotenv config that specifies the path
 require('dotenv').config({ path: path.resolve(__dirname, './.env') });
+
+require('./Models/Course');
+
 const app = express();
-const MONGO_URI=process.env.MONGO_URI
+const MONGO_URI = process.env.MONGO_URI;
+
 cloudinary.config({ 
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME, 
   api_key: process.env.CLOUDINARY_API_KEY, 
@@ -18,8 +22,8 @@ cloudinary.config({
 
 app.use(bodyParser.json());
 
-// Serve static files from the uploads directory
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// This line is no longer needed as images are served from Cloudinary
+// app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 mongoose
 .connect(MONGO_URI)
@@ -30,6 +34,8 @@ mongoose
     const count = await Course.countDocuments();
     if (count === 0) {
       const coursesFilePath = path.join(__dirname, "Data", "courses.json");
+      console.log("Looking for courses.json at:", coursesFilePath);
+      console.log("Exists?", fs.existsSync(coursesFilePath));
       fs.readFile(coursesFilePath, "utf8", async (err, data) => {
         if (err) {
           console.error("Error reading courses file:", err);
@@ -58,11 +64,11 @@ const UserRoutes = require( "./Routes/UserRoutes");
 const PaymentRoutes = require ( "./Routes/PaymentRoutes");
 const QuestionRoutes = require ( "./Routes/QuestionRoutes");
 const CourseRoutes = require("./Routes/CourseRoutes");
+
 app.use("/api", UserRoutes);
 app.use("/api", QuestionRoutes);
 app.use("/api", PaymentRoutes);
 app.use("/api", CourseRoutes);
-
 
 app.use((req, res, next) => next (new HttpError('Could not find this route.', 404)));
 
@@ -71,6 +77,7 @@ app.use((error, req, res, next) => {
     res.json({ message: error.message || 'An unknown error occurred!' });
 });
 
+// REMOVED: app.listen(8000 ,()=> console.log("listening to port 8000"));
 
-// app.listen(8000 ,()=> console.log("listening to port 8000"));
+// ADDED: This exports the app for Vercel to use
 module.exports = app;
