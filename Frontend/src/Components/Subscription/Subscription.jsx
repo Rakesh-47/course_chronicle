@@ -48,7 +48,7 @@ export default function Subscription() {
     }
 
     try {
-      const response = await fetch("http://localhost:8000/makePayment", {
+      const response = await fetch("/api/makePayment", {
         method: "POST",
         body: JSON.stringify({
           amount: 499 * 100, // Amount in paise
@@ -86,7 +86,7 @@ export default function Subscription() {
       handler: async function (response) {
         try {
           const validateRes = await fetch(
-            "http://localhost:8000/validatePayment",
+            "/api/validatePayment",
             {
               method: "POST",
               body: JSON.stringify(response),

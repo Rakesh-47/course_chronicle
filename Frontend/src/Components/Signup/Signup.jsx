@@ -26,7 +26,7 @@ export default function Signup() {
   const [coursesData, setCoursesData] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:8000/api/courses")
+    fetch("/api/courses")
       .then((res) => res.json())
       .then((data) => setCoursesData(data))
       .catch((error) => console.error("Error loading courses:", error));
@@ -71,13 +71,13 @@ export default function Signup() {
 
     // --- UPDATED LOGIC to handle both Login and Signup ---
     if (isLoginMode) {
-      url = "http://localhost:8000/login";
+      url = "/api/login";
       payload = {
         Email: formData.Email,
         Password: formData.Password,
       };
     } else {
-      url = "http://localhost:8000/signup";
+      url = "/api/signup";
       payload = {
         ...formData,
         enrolledCourses: selectedCourses.filter((id) => id),

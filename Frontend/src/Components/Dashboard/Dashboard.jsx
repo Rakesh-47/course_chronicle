@@ -10,7 +10,7 @@ const Dashboard = () => {
   const [recommendations, setRecommendations] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:8000/dashboard", {
+    fetch("/api/dashboard", {
       headers: { Authorization: "Bearer " + auth.token },
     })
       .then((res) => res.json())
@@ -26,13 +26,13 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchNotificationsAndCredits = async () => {
       try {
-        const notifRes = await fetch("http://localhost:8000/notifications", {
+        const notifRes = await fetch("/api/notifications", {
           headers: { Authorization: "Bearer " + auth.token },
         });
         const notifData = await notifRes.json();
         setNotifications(notifData);
 
-        const profileRes = await fetch("http://localhost:8000/profile", {
+        const profileRes = await fetch("/api/profile", {
           headers: { Authorization: "Bearer " + auth.token },
         });
         const updatedUser = await profileRes.json();
