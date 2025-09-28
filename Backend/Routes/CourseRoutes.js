@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Course = require("../Models/Course");
 
-router.get("/api/courses", async (req, res, next) => {
+router.get("/courses", async (req, res, next) => {
   try {
     const courses = await Course.find({});
     res.json(courses);
