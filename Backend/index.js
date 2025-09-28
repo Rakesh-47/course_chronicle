@@ -7,7 +7,7 @@ const cloudinary = require('cloudinary').v2;
 const fs = require("fs");
 require('dotenv').config();
 require('./Models/Course');
-
+require('dotenv').config({ path: path.resolve(__dirname, './.env') });
 const app = express();
 const MONGO_URI=process.env.MONGO_URI
 cloudinary.config({ 
@@ -61,7 +61,7 @@ const CourseRoutes = require("./Routes/CourseRoutes");
 app.use(UserRoutes);
 app.use(QuestionRoutes);
 app.use(PaymentRoutes);
-app.use(CourseRoutes);
+app.use("/api",CourseRoutes);
 
 
 app.use((req, res, next) => next (new HttpError('Could not find this route.', 404)));

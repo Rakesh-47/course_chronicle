@@ -1,5 +1,10 @@
 {
   "version": 2,
+  "functions": {
+    "Backend/index.js": {
+      "includeFiles": "Backend/Data/**/*"
+    }
+  },
   "builds": [
     {
       "src": "Backend/index.js",
