@@ -7,8 +7,8 @@ import rehypeKatex from "rehype-katex";
 import "katex/dist/katex.min.css";
 import "./Question.css";
 import { useParams } from "react-router-dom";
-import coinIcon from "../../Assets/coin.svg";
-import searchIcon from "../../Assets/search.svg";
+import { Assets } from "../../assets/Assets";
+
 
 const QuestionList = () => {
   const auth = useContext(AuthContext);
@@ -21,7 +21,7 @@ const QuestionList = () => {
   useEffect(() => {
     if (id) {
       // Fetch a single paper by ID
-      fetch("http://localhost:8000/getPaperByID", {
+      fetch("/api/getPaperByID", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -36,7 +36,7 @@ const QuestionList = () => {
         .catch((error) => console.error("Error fetching paper:", error));
     } else {
       // Fetch all papers for the list view
-      fetch("http://localhost:8000/getPapers", {
+      fetch("/api/getPapers", {
         headers: { Authorization: "Bearer " + auth.token },
       })
         .then((res) => res.json())
@@ -47,7 +47,7 @@ const QuestionList = () => {
 
   useEffect(() => {
     if (selectedPaper) {
-      fetch("http://localhost:8000/getUnlockedAnswers", {
+      fetch("/api/getUnlockedAnswers", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -76,7 +76,7 @@ const QuestionList = () => {
     setSelectedPaper(paper);
 
     // Update browsed courses for the user by calling the update endpoint
-    fetch("http://localhost:8000/updateBrowsedCourse", {
+    fetch("/api/updateBrowsedCourse", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -105,7 +105,7 @@ const QuestionList = () => {
     const confirmed = window.confirm("Are you sure you want to unlock this answer for 5 credits?");
     if (confirmed) {
       try {
-        const response = await fetch("http://localhost:8000/unlockAnswer", {
+        const response = await fetch("/api/unlockAnswer", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -159,7 +159,7 @@ const QuestionList = () => {
               className="w-full px-5 py-2 rounded-3xl bg-gray-800 border border-gray-600 text-white pl-12"
             />
             <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
-              <img src={searchIcon} alt="search" className="w-5 h-5" />
+              <img src={Assets.search_icon} alt="search" className="w-5 h-5" />
             </span>
           </div>
           <ul className="space-y-4">
@@ -210,13 +210,13 @@ const QuestionList = () => {
             <h3 className="text-lg font-bold mb-4">{selectedPaper.title}</h3>
             {selectedPaper.filePath.endsWith('.pdf') ? (
               <iframe
-                src={`http://localhost:8000${selectedPaper.filePath}`}
+                src={`/api/${selectedPaper.filePath}`}
                 title="Paper"
                 className="w-full h-[80vh] border border-gray-600"
               ></iframe>
             ) : (
               <img
-                src={`http://localhost:8000${selectedPaper.filePath}`}
+                src={`/api/${selectedPaper.filePath}`}
                 alt="Question Paper"
                 className="w-full h-[80vh] object-contain border border-gray-600"
               />
@@ -281,7 +281,7 @@ const QuestionList = () => {
                         <span className="flex items-center ml-2">
                           5
                           <img
-                            src={coinIcon}
+                            src={Assets.coin_icon}
                             className="w-auto h-5 ml-1 inline-block text-white align-middle"
                           />
                         </span>

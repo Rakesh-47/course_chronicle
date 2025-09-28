@@ -7,6 +7,9 @@ import lock_icon from "./lock_icon.svg";
 import email_icon from "./email_icon.svg";
 import cross_icon from "./cross_icon.svg";
 import profile_img from "./rk.jpg";
+import search_icon from "./search.svg";
+import coin_icon from "./coin.svg";
+
 
 export const Assets = {
   logo,
@@ -18,4 +21,6 @@ export const Assets = {
   email_icon,
   cross_icon,
   profile_img,
+  search_icon,
+  coin_icon,
 };
