@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "cd Frontend && npm install && npm run build",
+    "build": "cd Frontend && npm install --legacy-peer-deps && npm run build",
     "dev": "concurrently \"npm --prefix Frontend run dev\" \"vercel dev --listen 3001\""
   },
   "devDependencies": {
