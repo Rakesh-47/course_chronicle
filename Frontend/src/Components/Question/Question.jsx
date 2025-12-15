@@ -9,6 +9,13 @@ import "./Question.css";
 import { useParams } from "react-router-dom";
 import { Assets } from "../../assets/Assets";
 
+const getFileURL = (path) => {
+  if (!path) return "";
+  if (path.startsWith("http://") || path.startsWith("https://")) {
+    return path;
+  }
+  return `${process.env.REACT_APP_API_URL}/${path}`;
+};
 
 const QuestionList = () => {
   const auth = useContext(AuthContext);
@@ -208,15 +215,15 @@ const QuestionList = () => {
           {/* Left Side: Paper */}
           <div className="w-1/2 p-4 bg-gray-800 border-r border-gray-700">
             <h3 className="text-lg font-bold mb-4">{selectedPaper.title}</h3>
-            {selectedPaper.filePath.endsWith('.pdf') ? (
+            {selectedPaper.filePath.toLowerCase().endsWith(".pdf") ? (
               <iframe
-                src={`/api/${selectedPaper.filePath}`}
+                src={getFileURL(selectedPaper.filePath)}
                 title="Paper"
                 className="w-full h-[80vh] border border-gray-600"
               ></iframe>
             ) : (
               <img
-                src={`/api/${selectedPaper.filePath}`}
+                src={getFileURL(selectedPaper.filePath)}
                 alt="Question Paper"
                 className="w-full h-[80vh] object-contain border border-gray-600"
               />

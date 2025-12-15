@@ -11,12 +11,11 @@ const Course = require("../Models/Course");
 const promptTemplate = require("../Data/prompt.json");
 const cloudinary = require('cloudinary').v2; // Added for Cloudinary
 
-const GEMINI_KEY = process.env.GEMINI_KEY
-const API_KEY = process.env.GEMINI_API_KEY;
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_KEY}`;
+const GEMINI_KEY = process.env.GEMINI_KEY;
+// Use the correct API URL with the proper key
+const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`;
 console.log(GEMINI_KEY ? "Gemini API key loaded" : "No Gemini API key found");
 
-// This is the setup for the official SDK (used in the commented-out code)
 const genAI = new GoogleGenerativeAI(GEMINI_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro-latest" });
 

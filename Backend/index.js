@@ -22,8 +22,7 @@ cloudinary.config({
 
 app.use(bodyParser.json());
 
-// This line is no longer needed as images are served from Cloudinary
-// app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 
 mongoose
 .connect(MONGO_URI)
@@ -77,7 +76,7 @@ app.use((error, req, res, next) => {
     res.json({ message: error.message || 'An unknown error occurred!' });
 });
 
-// REMOVED: app.listen(8000 ,()=> console.log("listening to port 8000"));
+app.listen(8000 ,()=> console.log("listening to port 8000"));
 
-// ADDED: This exports the app for Vercel to use
+
 module.exports = app;
